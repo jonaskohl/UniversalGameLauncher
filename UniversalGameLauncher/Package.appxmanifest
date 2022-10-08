@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Package
+	xmlns="http://schemas.microsoft.com/appx/2010/manifest"
+	xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+	xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+	xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+	IgnorableNamespaces="uap rescap mp"
+>
+	<Identity Name="JonasKohl.UniversalGameLauncher"
+          Version="1.0.0.0"
+          Publisher="CN=Jonas Kohl, O=Jonas Kohl, L=MyCity, S=MyState, C=MyCountry"/>
+	<Properties>
+		<DisplayName>Universal Game Launcher</DisplayName>
+		<PublisherDisplayName>Jonas Kohl</PublisherDisplayName>
+		<Logo>images\icon.png</Logo>
+	</Properties>
+	<Capabilities>
+		<rescap:Capability Name="packageQuery" />
+	</Capabilities>
+	<Prerequisites>
+		<OSMinVersion>6.1.0</OSMinVersion>
+		<OSMaxVersionTested>10.0.22621</OSMaxVersionTested>
+	</Prerequisites>
+	<Resources>
+		<Resource Language="en-us" />
+	</Resources>
+</Package>

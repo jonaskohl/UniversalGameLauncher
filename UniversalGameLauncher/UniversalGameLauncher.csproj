@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net6.0-windows</TargetFramework>
+		<!--<TargetFramework>net6.0-windows10.0.19041.0</TargetFramework>-->
+		<!--<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>-->
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<Configurations>Debug;Release;ReleaseOldWindows</Configurations>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DefineConstants>$(DefineConstants)TRACE;UWP</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <DefineConstants>$(DefineConstants)TRACE;UWP</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseOldWindows|AnyCPU'">
+	  <DefineConstants>$(DefineConstants)TRACE</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="Resources\classiccaption.ttf" />
+		<None Remove="Resources\cover_missing.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Gameloop.Vdf" Version="0.6.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="Microsoft.WindowsAPICodePack">
+	    <HintPath>..\..\..\git\WindowsAPICodePack\Shell\bin\Release\Microsoft.WindowsAPICodePack.dll</HintPath>
+	  </Reference>
+	  <Reference Include="Microsoft.WindowsAPICodePack.Shell">
+	    <HintPath>..\..\..\git\WindowsAPICodePack\Shell\bin\Release\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Resource Include="Resources\classiccaption.ttf" />
+		<Resource Include="Resources\cover_missing.png" />
+	</ItemGroup>
+
+</Project>
