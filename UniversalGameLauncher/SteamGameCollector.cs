@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -32,7 +33,7 @@ namespace UniversalGameLauncher
 
             var libFoldersList = (IEnumerable<dynamic>)volvo.Value;
             //var libFolders = libFoldersList.Where(v => v.Value.totalsize.Value != "0" && Enumerable.ToArray<dynamic>(v.Value.apps).Length > 0).Select(v => v.Value.path.ToString()).ToArray();
-            var libFolders = libFoldersList.Where(v => Enumerable.ToArray<dynamic>(v.Value.apps).Length > 0).Select(v => v.Value.path.ToString()).ToArray();
+            var libFolders = libFoldersList.Where(v => DoesPropertyExist(v.Value, "apps") && Enumerable.ToArray<dynamic>(v.Value.apps).Length > 0).Select(v => v.Value.path.ToString()).ToArray();
 
             var infos = libFolders.Select(f =>
             {
@@ -88,6 +89,14 @@ namespace UniversalGameLauncher
                 return appInfos.ToArray();
             }).SelectMany(i => i).ToArray();
             return infos;
+        }
+
+        public static bool DoesPropertyExist(dynamic settings, string name)
+        {
+            if (settings is ExpandoObject)
+                return ((IDictionary<string, object>)settings).ContainsKey(name);
+
+            return settings.GetType().GetProperty(name) != null;
         }
     }
 }
