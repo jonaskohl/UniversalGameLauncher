@@ -11,6 +11,7 @@ namespace UniversalGameLauncher
         private string? _executableLocation;
         private string[]? _executableArguments;
         private ImageSource? _coverImage;
+        private ImageSource? _gameSource;
 
         internal Action<GameInfo, Dispatcher, CacheManager>? FetchImageSourceAction;
 
@@ -63,6 +64,19 @@ namespace UniversalGameLauncher
             {
                 _coverImage = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CoverImage)));
+            }
+        }
+
+        public ImageSource? GameSource
+        {
+            get
+            {
+                return _gameSource;
+            }
+            set
+            {
+                _gameSource = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(GameSource)));
             }
         }
 

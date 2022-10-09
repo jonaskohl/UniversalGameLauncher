@@ -30,7 +30,7 @@ namespace UniversalGameLauncher
                         tempFiles.Remove(file);
                     }
                 }
-                catch { throw; }
+                catch {  }
             }
         }
     }

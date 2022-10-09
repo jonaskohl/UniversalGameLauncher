@@ -14,6 +14,7 @@
             <Setter Property="FontSize" Value="10" />
             <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets, /Resources/#ClassicCaption" />
             <Setter Property="Foreground" Value="White" />
+            <Setter Property="Focusable" Value="False" />
 
             <Setter Property="Template">
                 <Setter.Value>
@@ -48,6 +49,32 @@
                     <Setter Property="Background" Value="#20FF0000"/>
                 </Trigger>
             </Style.Triggers>
+        </Style>
+
+        <Style x:Key="Heading" TargetType="Label">
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,0,24" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Label">
+                        <StackPanel>
+                            <ContentPresenter Content="{TemplateBinding Content}" />
+                            <Rectangle HorizontalAlignment="Stretch" Height="1" Margin="0,4,0,0">
+                                <Rectangle.Fill>
+                                    <LinearGradientBrush>
+                                        <LinearGradientBrush.GradientStops>
+                                            <GradientStop Color="White" Offset="0" />
+                                            <GradientStop Color="Transparent" Offset="1" />
+                                        </LinearGradientBrush.GradientStops>
+                                    </LinearGradientBrush>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                        </StackPanel>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Application.Resources>
 </Application>

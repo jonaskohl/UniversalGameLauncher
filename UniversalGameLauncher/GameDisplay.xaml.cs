@@ -28,6 +28,7 @@ namespace UniversalGameLauncher
 
         public static readonly DependencyProperty GameNameProperty = DependencyProperty.Register("GameName", typeof(string), typeof(GameDisplay));
         public static readonly DependencyProperty GameCoverProperty = DependencyProperty.Register("GameCover", typeof(ImageSource), typeof(GameDisplay));
+        public static readonly DependencyProperty OverlayIconProperty = DependencyProperty.Register("OverlayIcon", typeof(ImageSource), typeof(GameDisplay));
 
         public string GameName
         {
@@ -38,6 +39,11 @@ namespace UniversalGameLauncher
         {
             get => (ImageSource)GetValue(GameCoverProperty);
             set => SetValue(GameCoverProperty, value);
+        }
+        public ImageSource OverlayIcon
+        {
+            get => (ImageSource)GetValue(OverlayIconProperty);
+            set => SetValue(OverlayIconProperty, value);
         }
 
         public GameDisplay()

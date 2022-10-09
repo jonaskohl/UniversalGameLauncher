@@ -1,0 +1,55 @@
+﻿<local:DisplayPage x:Class="UniversalGameLauncher.GamesPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:UniversalGameLauncher"
+      mc:Ignorable="d" 
+      x:Name="RootWindow"
+      d:DesignHeight="450" d:DesignWidth="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        
+        <Border Grid.Row="0" Background="Black" Panel.ZIndex="1">
+            <Border.Effect>
+                <DropShadowEffect ShadowDepth="4" Direction="270" BlurRadius="8" Opacity="0.25" />
+            </Border.Effect>
+            <AdornerDecorator>
+                <TextBox x:Name="SearchTextBox" Padding="8" Background="#FF41424A" Foreground="White" BorderBrush="{x:Null}" BorderThickness="0" SelectionBrush="#FF458EE0">
+                    <local:WatermarkService.Watermark>
+                        <StackPanel Orientation="Horizontal">
+                            <Viewbox xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Width="16" Height="16">
+                                <Canvas Width="10240" Height="10240">
+                                    <Path Data="M5986 6814l828 -828c124,-124 328,-124 452,0l2428 2428c124,124 124,328 0,452l-828 828c-124,124 -328,124 -452,0l-2428 -2428c-124,-124 -124,-328 0,-452z" Fill="#FFFFFF"/>
+                                    <Path Data="M6082 5442l412 412 -640 640 -412 -412c-534,401 -1197,638 -1916,638 -1764,0 -3194,-1430 -3194,-3194 0,-1764 1430,-3194 3194,-3194 1764,0 3194,1430 3194,3194 0,719 -237,1382 -638,1916zm-2556 -4471c-1411,0 -2555,1144 -2555,2555 0,1411 1144,2555 2555,2555 1411,0 2555,-1144 2555,-2555 0,-1411 -1144,-2555 -2555,-2555z" Fill="#FFFFFF"/>
+                                </Canvas>
+                            </Viewbox>
+                            <Rectangle Width="4"/>
+                            <TextBlock Foreground="White">Search for game(s)...</TextBlock>
+                        </StackPanel>
+                    </local:WatermarkService.Watermark>
+                </TextBox>
+            </AdornerDecorator>
+        </Border>
+
+        <Grid Grid.Row="1" Panel.ZIndex="0">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Games}" x:Name="GameListItemControl">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel FocusManager.IsFocusScope="True" Focusable="True" HorizontalAlignment="Center" Margin="8" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <local:GameDisplay OverlayIcon="{Binding GameSource}" GameCover="{Binding CoverImage, FallbackValue={x:Null}}"  GameName="{Binding Name}" Click="GameClicked" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</local:DisplayPage>

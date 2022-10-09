@@ -12,6 +12,11 @@
     <Window.Resources>
         <local:MaximizedTextConverter x:Key="MaximizedTextConverter" />
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <local:ReversibleBooleanToVisibilityConverter x:Key="RevBooleanToVisibilityConverter" />
+        <local:ValueConverterGroup x:Key="InverseBooleanToVisibilityConverter">
+            <local:InverseBooleanConverter />
+            <BooleanToVisibilityConverter />
+        </local:ValueConverterGroup>
     </Window.Resources>
     <Window.Background>
         <LinearGradientBrush>
@@ -35,20 +40,20 @@
     </Window.CommandBindings>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="127*" />
+            <ColumnDefinition Width="1018*"/>
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="30" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Panel.ZIndex="2" Opacity="1">
+        <Border Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="3" Panel.ZIndex="2" Opacity="1">
             <Border.Background>
                 <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-                    <GradientStop Color="#FF458EE0"/>
-                    <GradientStop Color="#FF1C69BF" Offset="1"/>
+                    <GradientStop Color="#ff86878b"/>
+                    <GradientStop Color="#ff4f5056" Offset="1"/>
                 </LinearGradientBrush>
             </Border.Background>
             <Border.Effect>
@@ -56,26 +61,50 @@
             </Border.Effect>
         </Border>
 
-        <Border Padding="8" Grid.Column="0" Grid.Row="0" Panel.ZIndex="3">
+        <Border Grid.Column="0" Grid.Row="0" Panel.ZIndex="3" Grid.ColumnSpan="2">
             <StackPanel Orientation="Horizontal">
-                <Canvas WindowChrome.IsHitTestVisibleInChrome="True" Width="16" Height="16" MouseDown="SystemMenuIcon_MouseDown" MouseUp="SystemMenuIcon_MouseUp" MouseLeave="SystemMenuIcon_MouseLeave">
-                    <Rectangle Fill="#00000000" Width="16" Height="16" />
-                    <Viewbox xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Width="16" Height="16">
-                        <Canvas Width="10240" Height="10240">
-                            <Path Data="M1920 7680l6400 0c353,0 640,288 640,640l0 640c0,352 -288,640 -640,640l-6400 0c-352,0 -640,-287 -640,-640l0 -640c0,-353 288,-640 640,-640z" Fill="#FFFFFF"/>
-                            <Path Data="M6720 6720l1280 0c176,0 320,144 320,320l0 320 -1920 0 0 -320c0,-176 144,-320 320,-320z" Fill="#FFFFFF"/>
-                            <Path Data="M2240 6720l1280 0c176,0 320,144 320,320l0 320 -1920 0 0 -320c0,-176 144,-320 320,-320z" Fill="#FFFFFF"/>
-                            <Path Data="M5760 4707l0 2653 -1280 0 0 -2653c203,60 418,93 640,93 222,0 437,-33 640,-93z" Fill="#FFFFFF"/>
-                            <Path Data="M5120 640c1060,0 1920,860 1920,1920 0,1060 -860,1920 -1920,1920 -1060,0 -1920,-860 -1920,-1920 0,-1060 860,-1920 1920,-1920zm283 767c45,-102 35,-210 -26,-304 -62,-93 -158,-144 -270,-143 -874,7 -1582,715 -1587,1590 -1,103 42,192 123,255 81,63 178,83 277,57 143,-37 239,-160 240,-308 3,-525 428,-950 953,-954 130,-1 240,-77 290,-193z" Fill="#FFFFFF"/>
+                <Border CornerRadius="0,0,6,0" ClipToBounds="True" Panel.ZIndex="3" x:Name="ToolButtonsWrapper">
+                    <Border.OpacityMask>
+                        <VisualBrush>
+                            <VisualBrush.Visual>
+                                <Border 
+                                Background="Black"
+                                SnapsToDevicePixels="True"
+                                CornerRadius="{Binding CornerRadius, RelativeSource={RelativeSource AncestorType=Border}}"
+                                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Border}}"
+                                Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Border}}"
+                            />
+                            </VisualBrush.Visual>
+                        </VisualBrush>
+                    </Border.OpacityMask>
+                    <StackPanel Orientation="Horizontal">
+                        <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="HomeButton_Click" ToolTip="Back to game list" Visibility="{Binding IsOnHomePage, ElementName=RootWindow, Converter={StaticResource RevBooleanToVisibilityConverter}, ConverterParameter=True}" Content="&#xe80f;" FontSize="16" />
+                        <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="Settings_Click" ToolTip="Settings" Visibility="{Binding IsOnHomePage, ElementName=RootWindow, Converter={StaticResource BooleanToVisibilityConverter}}" FontSize="16" Content="&#xe713;" />
+                        <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="AddButton_Click" Content="&#xe710;" FontSize="16" ToolTip="Add game" />
+                    </StackPanel>
+                </Border>
+                <Border Padding="8">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Stretch">
+                        <Canvas WindowChrome.IsHitTestVisibleInChrome="True" Width="16" Height="16" MouseDown="SystemMenuIcon_MouseDown" MouseUp="SystemMenuIcon_MouseUp" MouseLeave="SystemMenuIcon_MouseLeave">
+                            <Rectangle Fill="#00000000" Width="16" Height="16" />
+                            <Viewbox xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Width="16" Height="16">
+                                <Canvas Width="10240" Height="10240">
+                                    <Path Data="M1920 7680l6400 0c353,0 640,288 640,640l0 640c0,352 -288,640 -640,640l-6400 0c-352,0 -640,-287 -640,-640l0 -640c0,-353 288,-640 640,-640z" Fill="#FFFFFF"/>
+                                    <Path Data="M6720 6720l1280 0c176,0 320,144 320,320l0 320 -1920 0 0 -320c0,-176 144,-320 320,-320z" Fill="#FFFFFF"/>
+                                    <Path Data="M2240 6720l1280 0c176,0 320,144 320,320l0 320 -1920 0 0 -320c0,-176 144,-320 320,-320z" Fill="#FFFFFF"/>
+                                    <Path Data="M5760 4707l0 2653 -1280 0 0 -2653c203,60 418,93 640,93 222,0 437,-33 640,-93z" Fill="#FFFFFF"/>
+                                    <Path Data="M5120 640c1060,0 1920,860 1920,1920 0,1060 -860,1920 -1920,1920 -1060,0 -1920,-860 -1920,-1920 0,-1060 860,-1920 1920,-1920zm283 767c45,-102 35,-210 -26,-304 -62,-93 -158,-144 -270,-143 -874,7 -1582,715 -1587,1590 -1,103 42,192 123,255 81,63 178,83 277,57 143,-37 239,-160 240,-308 3,-525 428,-950 953,-954 130,-1 240,-77 290,-193z" Fill="#FFFFFF"/>
+                                </Canvas>
+                            </Viewbox>
                         </Canvas>
-                    </Viewbox>
-                </Canvas>
-                <Rectangle Width="8" />
-                <Label Padding="0" VerticalAlignment="Center" Foreground="White" Content="{Binding ElementName=RootWindow, Path=Title}" />
+                        <Rectangle Width="8" />
+                        <Label Padding="0" VerticalAlignment="Center" Foreground="White" Content="{Binding ElementName=RootWindow, Path=Title}" />
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="0" Grid.Column="1" CornerRadius="0,0,0,6" ClipToBounds="True" Panel.ZIndex="3" x:Name="CaptionButtonsWrapper">
+        <Border Grid.Row="0" Grid.Column="2" CornerRadius="0,0,0,6" ClipToBounds="True" Panel.ZIndex="3" x:Name="CaptionButtonsWrapper">
             <Border.OpacityMask>
                 <VisualBrush>
                     <VisualBrush.Visual>
@@ -96,43 +125,11 @@
             </StackPanel>
         </Border>
 
-        <Border Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Background="Black" Panel.ZIndex="1">
-            <Border.Effect>
-                <DropShadowEffect ShadowDepth="4" Direction="270" BlurRadius="8" Opacity="0.25" />
-            </Border.Effect>
-            <AdornerDecorator>
-                <TextBox x:Name="SearchTextBox" Padding="8" Background="#FF62636a" Foreground="White" BorderBrush="{x:Null}" BorderThickness="0" SelectionBrush="#FF458EE0">
-                    <local:WatermarkService.Watermark>
-                        <StackPanel Orientation="Horizontal">
-                            <Viewbox xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Width="16" Height="16">
-                                <Canvas Width="10240" Height="10240">
-                                    <Path Data="M5986 6814l828 -828c124,-124 328,-124 452,0l2428 2428c124,124 124,328 0,452l-828 828c-124,124 -328,124 -452,0l-2428 -2428c-124,-124 -124,-328 0,-452z" Fill="#FFFFFF"/>
-                                    <Path Data="M6082 5442l412 412 -640 640 -412 -412c-534,401 -1197,638 -1916,638 -1764,0 -3194,-1430 -3194,-3194 0,-1764 1430,-3194 3194,-3194 1764,0 3194,1430 3194,3194 0,719 -237,1382 -638,1916zm-2556 -4471c-1411,0 -2555,1144 -2555,2555 0,1411 1144,2555 2555,2555 1411,0 2555,-1144 2555,-2555 0,-1411 -1144,-2555 -2555,-2555z" Fill="#FFFFFF"/>
-                                </Canvas>
-                            </Viewbox>
-                            <Rectangle Width="4"/>
-                            <TextBlock Foreground="White">Search for game(s)...</TextBlock>
-                        </StackPanel>
-                    </local:WatermarkService.Watermark>
-                </TextBox>
-            </AdornerDecorator>
-        </Border>
-
-        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Panel.ZIndex="0">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding Games, ElementName=RootWindow}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel HorizontalAlignment="Center" Margin="8" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <local:GameDisplay GameCover="{Binding CoverImage, FallbackValue={x:Null}}" GameName="{Binding Name}" Click="GameClicked" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
-        </Grid>
+        <ContentControl
+            Grid.Column="0"
+            Grid.ColumnSpan="3"
+            Grid.Row="1"
+            x:Name="MainViewContainer"
+        />
     </Grid>
 </Window>

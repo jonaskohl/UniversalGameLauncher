@@ -18,32 +18,6 @@ namespace UniversalGameLauncher
             public ImageSource icon;
         }
 
-        //private GameInfo? TryFindMinecraftJavaEdition()
-        //{
-
-        //}
-
-        private AppInfo[] GetApps()
-        {
-            var FODLERID_AppsFolder = new Guid("{1e87508d-89c2-42f0-8a7e-645a0f50ca58}");
-            ShellObject appsFolder = (ShellObject)KnownFolderHelper.FromKnownFolderId(FODLERID_AppsFolder);
-            var folder = (IKnownFolder)appsFolder;
-            var count = folder.Count();
-            var infos = new AppInfo[count];
-
-            for (var i = 0; i < count; ++i)
-            {
-                var app = folder.ElementAt(i);
-                infos[i] = new AppInfo()
-                {
-                    name = app.Name,
-                    parsingName = app.ParsingName,
-                    icon = app.Thumbnail.MediumBitmapSource
-                };
-            }
-
-            return infos;
-        }
         private AppInfo? TryGetApp(string name)
         {
             try

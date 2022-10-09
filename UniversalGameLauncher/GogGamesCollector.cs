@@ -36,6 +36,7 @@ namespace UniversalGameLauncher
 
                 return new GameInfo()
                 {
+                    GameSource = GameSourceUtils.GetOverlayIcon(GameSource.GOG),
                     FetchImageSourceAction = (game, dispatcher, cacheManager) =>
                     {
                         string? coverImagePath = null;

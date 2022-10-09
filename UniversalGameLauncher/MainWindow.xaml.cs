@@ -1,5 +1,7 @@
-﻿using System;
+﻿using SharpDX.XInput;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
@@ -8,6 +10,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
@@ -17,17 +21,49 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace UniversalGameLauncher
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
 
         public static readonly DependencyProperty GamesProperty = DependencyProperty.Register("Games", typeof(GameInfo[]), typeof(MainWindow));
         public static readonly DependencyProperty GamesAreLoadingProperty = DependencyProperty.Register("GamesAreLoading", typeof(bool), typeof(MainWindow));
+        public static readonly DependencyProperty IsOnHomePageProperty = DependencyProperty.Register("IsOnHomePage", typeof(bool), typeof(MainWindow));
+
+
+        DispatcherTimer _timer = new DispatcherTimer();
+        private string _leftAxis;
+        private string _rightAxis;
+        private string _buttons;
+        private Controller _controller;
+
+        [Flags]
+        enum GamepadNavigationChangeKind
+        {
+            Nothing,
+            XDirection,
+            YDirection,
+            ActivateButton
+        }
+
+        private GamepadNavigationState lastState = GamepadNavigationState.Empty;
+
+        struct GamepadNavigationState
+        {
+            public byte XDirection = 0;
+            public byte YDirection = 0;
+            public bool ActivateButton = false;
+
+            public static GamepadNavigationState Empty = new GamepadNavigationState();
+
+            public GamepadNavigationState() { }
+        }
+
 
         public GameInfo[] Games
         {
@@ -39,6 +75,12 @@ namespace UniversalGameLauncher
         {
             get => (bool)GetValue(GamesAreLoadingProperty);
             set => SetValue(GamesAreLoadingProperty, value);
+        }
+
+        public bool IsOnHomePage
+        {
+            get => (bool)GetValue(IsOnHomePageProperty);
+            set => SetValue(IsOnHomePageProperty, value);
         }
 
         private const int WM_SYSCOMMAND = 0x112;
@@ -81,12 +123,25 @@ namespace UniversalGameLauncher
         {
             InitializeComponent();
 
+            Loaded += MainWindow_Loaded;
+            Closing += MainWindow_Closing;
+            _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+            _timer.Tick += _timer_Tick;
+            _timer.Start();
+
+            DataContext = this;
+
+            Navigate<GamesPage>();
+
             var curDir = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
             var cacheFilePath = System.IO.Path.Combine(curDir, "cacheinfo");
             var cachePath = System.IO.Path.Combine(curDir, "cache");
 
             if (Environment.OSVersion.Version.Major < 10 || (Environment.OSVersion.Version < new Version(10, 0, 22000)))
+            {
+                ToolButtonsWrapper.CornerRadius = new CornerRadius(0);
                 CaptionButtonsWrapper.CornerRadius = new CornerRadius(0);
+            }
 
             cacheManager = new()
             {
@@ -131,6 +186,107 @@ namespace UniversalGameLauncher
             });
         }
 
+        private void MainWindow_Closing(object? sender, CancelEventArgs e)
+        {
+            _controller = null;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            _controller = new Controller(UserIndex.One);
+        }
+
+        void _timer_Tick(object sender, EventArgs e)
+        {
+            DisplayControllerInformation();
+        }
+
+        void DisplayControllerInformation()
+        {
+            if (!_controller.IsConnected)
+                return;
+
+            var state = _controller.GetState();
+            var rawAxisX = state.Gamepad.LeftThumbX;
+            var rawAxisY = state.Gamepad.LeftThumbY;
+
+            var btns = state.Gamepad.Buttons;
+
+            var x = rawAxisX / (float)short.MaxValue;
+            if (Math.Abs(x) < 0.1) x = 0;
+
+            var y = rawAxisY / (float)short.MaxValue;
+            if (Math.Abs(y) < 0.1) y = 0;
+
+            var directionX = (Math.Abs(x) > 0.5) ? Math.Sign(x) : 0;
+            var directionY = (Math.Abs(y) > 0.5) ? Math.Sign(y) : 0;
+
+            directionX = btns.HasFlag(GamepadButtonFlags.DPadLeft) ? -1 : (btns.HasFlag(GamepadButtonFlags.DPadRight) ? 1 : directionX);
+            directionY = btns.HasFlag(GamepadButtonFlags.DPadDown) ? -1 : (btns.HasFlag(GamepadButtonFlags.DPadUp) ? 1 : directionY);
+
+            var fire = btns.HasFlag(GamepadButtonFlags.A);
+
+            var newState = new GamepadNavigationState()
+            {
+                ActivateButton = fire,
+                XDirection = (byte)(directionX & 0xFF),
+                YDirection = (byte)(directionY & 0xFF)
+            };
+
+            var whatChanged = GamepadNavigationChangeKind.Nothing;
+
+            if (lastState.ActivateButton != newState.ActivateButton)
+                whatChanged |= GamepadNavigationChangeKind.ActivateButton;
+
+            if (lastState.XDirection != newState.XDirection)
+                whatChanged |= GamepadNavigationChangeKind.XDirection;
+
+            if (lastState.YDirection != newState.YDirection)
+                whatChanged |= GamepadNavigationChangeKind.YDirection;
+
+            if (whatChanged != GamepadNavigationChangeKind.Nothing)
+                OnGamepadInputChanged(whatChanged, newState);
+
+            lastState = newState;
+
+            Title = string.Format("X: {0} Y: {1}", directionX, directionY);
+
+        }
+
+        void OnGamepadInputChanged(GamepadNavigationChangeKind changed, GamepadNavigationState newState)
+        {
+            //MessageBox.Show(changed.ToString());
+            if (changed.HasFlag(GamepadNavigationChangeKind.XDirection) && newState.XDirection != 0)
+            {
+                GameMoveFocus(new TraversalRequest(newState.XDirection > 0 ? FocusNavigationDirection.Right : FocusNavigationDirection.Left));
+            }
+            if (changed.HasFlag(GamepadNavigationChangeKind.YDirection) && newState.YDirection != 0)
+            {
+                GameMoveFocus(new TraversalRequest(newState.YDirection > 0 ? FocusNavigationDirection.Up : FocusNavigationDirection.Down));
+            }
+            if (changed.HasFlag(GamepadNavigationChangeKind.ActivateButton) && newState.ActivateButton)
+            {
+                var focusedControl = FocusManager.GetFocusedElement(this);
+                if (focusedControl is Button)
+                {
+                    var peer = new ButtonAutomationPeer(focusedControl as Button);
+                    var invokeProv = peer.GetPattern(PatternInterface.Invoke) as IInvokeProvider;
+                    invokeProv?.Invoke();
+                }
+            }
+        }
+
+        private void GameMoveFocus(TraversalRequest traversalRequest)
+        {
+            UIElement elementWithFocus = Keyboard.FocusedElement as UIElement;
+
+            // Change keyboard focus. 
+            if (elementWithFocus != null)
+            {
+                elementWithFocus.MoveFocus(traversalRequest);
+            }
+        }
+
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
@@ -152,6 +308,8 @@ namespace UniversalGameLauncher
 
         private bool inSysMenu = false;
 
+        public event PropertyChangedEventHandler? PropertyChanged;
+
         void SystemMenuIcon_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ClickCount == 1 && !inSysMenu)
@@ -172,7 +330,7 @@ namespace UniversalGameLauncher
             var wMenu = GetSystemMenu(callingWindow, false);
             EnableMenuItem(wMenu, SC_MAXIMIZE, (WindowState == WindowState.Maximized) ? MF_GRAYED : MF_ENABLED);
 
-            var pt = new Point(8, 24);
+            var pt = new Point(96, 24);
             pt.Offset(BorderThickness.Left, BorderThickness.Top);
             pt = PointToScreen(pt);
 
@@ -249,6 +407,44 @@ namespace UniversalGameLauncher
         private string PsiToString(ProcessStartInfo psi)
         {
             return $"{psi.FileName} {psi.Arguments}";
+        }
+
+        private void Navigate<T>() where T : DisplayPage
+        {
+            if (MainViewContainer.Content is not null && MainViewContainer.Content is DisplayPage)
+            {
+                (MainViewContainer.Content as DisplayPage).EventOccurred -= DisplayPage_EventOccurred;
+            }
+
+            IsOnHomePage = typeof(T) == typeof(GamesPage);
+
+            var instance = (T?)Activator.CreateInstance(typeof(T));
+            instance.DataContext = this;
+            instance.EventOccurred += DisplayPage_EventOccurred;
+            MainViewContainer.Content = instance;
+        }
+
+        private void DisplayPage_EventOccurred(object? sender, DisplayPageEventArgs e)
+        {
+            if (e.EventName == "GameClicked")
+            {
+                GameClicked(e.EventSource!, e.EventArgs);
+            }
+        }
+
+        private void Settings_Click(object sender, RoutedEventArgs e)
+        {
+            Navigate<SettingsPage>();
+        }
+
+        private void HomeButton_Click(object sender, RoutedEventArgs e)
+        {
+            Navigate<GamesPage>();
+        }
+
+        private void AddButton_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Gameloop.Vdf;
+using Gameloop.Vdf.Linq;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -60,6 +61,7 @@ namespace UniversalGameLauncher
                     .Where(v => !IgnoreSteamIds.Contains(v.appid.Value.ToString()))
                     .Select(v => new GameInfo()
                     {
+                        GameSource = GameSourceUtils.GetOverlayIcon(GameSource.Steam),
                         FetchImageSourceAction = (game, dispatcher, cacheManager) =>
                         {
                             var appId = v.appid.Value.ToString();
@@ -93,7 +95,12 @@ namespace UniversalGameLauncher
 
         public static bool DoesPropertyExist(dynamic settings, string name)
         {
-            if (settings is ExpandoObject)
+            string fn = settings.GetType().FullName;
+            Debug.WriteLine("[DEBUG] {DoesPropertyExist} " + fn);
+
+            if (settings is VObject)
+                return ((IDictionary<string, VToken>)settings).ContainsKey(name);
+            else if (settings is ExpandoObject)
                 return ((IDictionary<string, object>)settings).ContainsKey(name);
 
             return settings.GetType().GetProperty(name) != null;

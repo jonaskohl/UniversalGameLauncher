@@ -26,10 +26,14 @@
 	<ItemGroup>
 		<None Remove="Resources\classiccaption.ttf" />
 		<None Remove="Resources\cover_missing.png" />
+		<None Remove="Resources\cover_shadow.png" />
+		<None Remove="Resources\gog_16.png" />
+		<None Remove="Resources\steam_16.png" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Gameloop.Vdf" Version="0.6.2" />
+		<PackageReference Include="SharpDX.XInput" Version="4.2.0" />
 		<PackageReference Include="SixLabors.ImageSharp" Version="2.1.3" />
 	</ItemGroup>
 
@@ -45,6 +49,11 @@
 	<ItemGroup>
 		<Resource Include="Resources\classiccaption.ttf" />
 		<Resource Include="Resources\cover_missing.png" />
+		<Resource Include="Resources\cover_shadow.png" />
+		<Resource Include="Resources\gog_16.png">
+		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Resource>
+		<Resource Include="Resources\steam_16.png" />
 	</ItemGroup>
 
 </Project>
