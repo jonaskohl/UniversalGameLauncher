@@ -1,5 +1,7 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Windows.Media;
+using System.Windows.Threading;
 
 namespace UniversalGameLauncher
 {
@@ -9,6 +11,8 @@ namespace UniversalGameLauncher
         private string? _executableLocation;
         private string[]? _executableArguments;
         private ImageSource? _coverImage;
+
+        internal Action<GameInfo, Dispatcher, CacheManager>? FetchImageSourceAction;
 
         public string? Name
         {

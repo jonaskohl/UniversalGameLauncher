@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
 
 namespace UniversalGameLauncher
 {
@@ -56,9 +57,26 @@ namespace UniversalGameLauncher
                     .Select(f => File.ReadAllText(f))
                     .Select(c => (VdfConvert.Deserialize(c) as dynamic).Value)
                     .Where(v => !IgnoreSteamIds.Contains(v.appid.Value.ToString()))
-                    .Select(v => new SteamGameInfo()
+                    .Select(v => new GameInfo()
                     {
-                        SteamGameId = v.appid.Value.ToString(),
+                        FetchImageSourceAction = (game, dispatcher, cacheManager) =>
+                        {
+                            var appId = v.appid.Value.ToString();
+                            var coverUrl = $"https://steamcdn-a.akamaihd.net/steam/apps/{appId}/library_600x900.jpg";
+                            Debug.WriteLine($"Cover url: {coverUrl}");
+                            var coverFile = cacheManager.GetCacheFileName(coverUrl);
+                            if (coverFile == null)
+                            {
+                                coverUrl = $"https://steamcdn-a.akamaihd.net/steam/apps/{appId}/header.jpg";
+                                coverFile = cacheManager.GetCacheFileName(coverUrl);
+                                if (coverFile == null)
+                                    return;
+                            }
+                            dispatcher.Invoke(() =>
+                            {
+                                game.CoverImage = new BitmapImage(new Uri(coverFile));
+                            });
+                        },
                         Name = v.name.Value,
                         ExecutableLocation = v.LauncherPath.Value,
                         ExecutableArguments = new string[] {

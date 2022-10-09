@@ -48,6 +48,13 @@ namespace UniversalGameLauncher
         const UInt32 MF_GRAYED = 0x00000001;
         internal const UInt32 SC_MAXIMIZE = 0xF030;
         internal const UInt32 SC_RESTORE = 0xF120;
+        const uint DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+        const uint DWMWCP_DEFAULT = 0;
+        const uint DWMWCP_DONOTROUND = 1;
+        const uint DWMWCP_ROUND = 2;
+        const uint DWMWCP_ROUNDSMALL = 3;
+
+        IntPtr Handle => new WindowInteropHelper(this).Handle;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
@@ -62,6 +69,12 @@ namespace UniversalGameLauncher
         [DllImport("user32.dll")]
         static extern bool EnableMenuItem(IntPtr hMenu, uint uIDEnableItem, uint uEnable);
 
+        [DllImport("dwmapi.dll")]
+        static extern IntPtr DwmGetWindowAttribute(IntPtr hWnd, uint dwAttribute, out uint pvAttribute, ref uint cbAttribute);
+
+        [DllImport("dwmapi.dll")]
+        static extern IntPtr DwmSetWindowAttribute(IntPtr hWnd, uint dwAttribute, ref uint pvAttribute, uint cbAttribute);
+
         CacheManager cacheManager;
 
         public MainWindow()
@@ -71,6 +84,9 @@ namespace UniversalGameLauncher
             var curDir = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
             var cacheFilePath = System.IO.Path.Combine(curDir, "cacheinfo");
             var cachePath = System.IO.Path.Combine(curDir, "cache");
+
+            if (Environment.OSVersion.Version.Major < 10 || (Environment.OSVersion.Version < new Version(10, 0, 22000)))
+                CaptionButtonsWrapper.CornerRadius = new CornerRadius(0);
 
             cacheManager = new()
             {
@@ -92,8 +108,10 @@ namespace UniversalGameLauncher
                         Games = new GameInfo[][]
                         {
                             new SteamGameCollector().GetGames(),
-                            new MiscHardCodedGameCollector().GetGames()
-                        }.SelectMany(i => i).Where(i => i is not null).ToArray();
+                            new MiscHardCodedGameCollector().GetGames(),
+                            new GogGamesCollector().GetGames(),
+                            new OriginGamesCollector().GetGames()
+                        }.SelectMany(i => i).Where(i => i is not null).OrderBy(i => i.Name?.ToLower()).ToArray();
                     });
                 }
                 catch (Exception ex)
@@ -113,6 +131,11 @@ namespace UniversalGameLauncher
             });
         }
 
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+        }
+
         private async Task PopulateCoverArt(GameInfo[] games)
         {
             await Task.Run(() =>
@@ -122,23 +145,7 @@ namespace UniversalGameLauncher
                     MaxDegreeOfParallelism = 2
                 }, game =>
                 {
-                    if (game is not SteamGameInfo)
-                        return;
-
-                    var coverUrl = $"https://steamcdn-a.akamaihd.net/steam/apps/{(game as SteamGameInfo)?.SteamGameId}/library_600x900.jpg";
-                    Debug.WriteLine($"Cover url: {coverUrl}");
-                    var coverFile = cacheManager.GetCacheFileName(coverUrl);
-                    if (coverFile == null)
-                    {
-                        coverUrl = $"https://steamcdn-a.akamaihd.net/steam/apps/{(game as SteamGameInfo)?.SteamGameId}/header.jpg";
-                        coverFile = cacheManager.GetCacheFileName(coverUrl);
-                        if (coverFile == null)
-                            return;
-                    }
-                    Dispatcher.Invoke(() =>
-                    {
-                        game.CoverImage = new BitmapImage(new Uri(coverFile));
-                    });
+                    game.FetchImageSourceAction?.Invoke(game, Dispatcher, cacheManager);
                 });
             });
         }
