@@ -5,6 +5,9 @@
              StartupUri="MainWindow.xaml"
              Exit="Application_Exit">
     <Application.Resources>
+        <local:FullscreenStateConverter x:Key="GlobalFullscreenStateConverter" />
+        <local:FullscreenStyleConverter x:Key="GlobalFullscreenStyleConverter" />
+        
         <Style x:Key="CaptionButton" TargetType="Button">
             <Setter Property="SnapsToDevicePixels" Value="True" />
             <Setter Property="UseLayoutRounding" Value="True" />

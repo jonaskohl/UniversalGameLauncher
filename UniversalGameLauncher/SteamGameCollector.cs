@@ -75,9 +75,13 @@ namespace UniversalGameLauncher
                                 if (coverFile == null)
                                     return;
                             }
+                            //cacheManager.Save();
                             dispatcher.Invoke(() =>
                             {
-                                game.CoverImage = new BitmapImage(new Uri(coverFile));
+                                try
+                                {
+                                    game.CoverImage = new BitmapImage(new Uri(coverFile));
+                                } catch (FileNotFoundException) { }
                             });
                         },
                         Name = v.name.Value,

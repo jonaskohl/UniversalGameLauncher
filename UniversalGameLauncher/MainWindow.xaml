@@ -8,7 +8,8 @@
         SizeChanged="Window_SizeChanged"
         x:Name="RootWindow"
         Foreground="White"
-        Title="Universal Game Launcher" Height="720" Width="1280" WindowState="Normal" WindowStartupLocation="CenterScreen">
+        Title="Universal Game Launcher" Height="720" Width="1280"
+        WindowStartupLocation="CenterScreen">
     <Window.Resources>
         <local:MaximizedTextConverter x:Key="MaximizedTextConverter" />
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -26,6 +27,7 @@
     </Window.Background>
     <WindowChrome.WindowChrome>
         <WindowChrome
+            x:Name="RootChrome"
             GlassFrameThickness="1"
             ResizeBorderThickness="4"
             CaptionHeight="30"
@@ -40,7 +42,7 @@
     </Window.CommandBindings>
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="127*" />
+            <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="1018*"/>
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
@@ -48,6 +50,9 @@
             <RowDefinition Height="30" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+        <Grid.LayoutTransform>
+            <ScaleTransform ScaleX="1" ScaleY="1" x:Name="RootScale" />
+        </Grid.LayoutTransform>
 
         <Border Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="3" Panel.ZIndex="2" Opacity="1">
             <Border.Background>
@@ -81,6 +86,7 @@
                         <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="HomeButton_Click" ToolTip="Back to game list" Visibility="{Binding IsOnHomePage, ElementName=RootWindow, Converter={StaticResource RevBooleanToVisibilityConverter}, ConverterParameter=True}" Content="&#xe80f;" FontSize="16" />
                         <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="Settings_Click" ToolTip="Settings" Visibility="{Binding IsOnHomePage, ElementName=RootWindow, Converter={StaticResource BooleanToVisibilityConverter}}" FontSize="16" Content="&#xe713;" />
                         <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="AddButton_Click" Content="&#xe710;" FontSize="16" ToolTip="Add game" />
+                        <!--<Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="ToggleFullscreen_Click" Content="&#xe740;" FontSize="16" />-->
                     </StackPanel>
                 </Border>
                 <Border Padding="8">
@@ -119,8 +125,8 @@
                 </VisualBrush>
             </Border.OpacityMask>
             <StackPanel Orientation="Horizontal">
-                <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Command="{x:Static SystemCommands.MinimizeWindowCommand}" Content="&#xe921;" />
-                <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Command="{x:Static SystemCommands.MaximizeWindowCommand}" Content="{Binding WindowState, ElementName=RootWindow, Converter={StaticResource MaximizedTextConverter}}" />
+                <Button WindowChrome.IsHitTestVisibleInChrome="True" Visibility="{Binding IsFullscreen, ElementName=RootWindow, Converter={StaticResource RevBooleanToVisibilityConverter}, ConverterParameter=True}" Style="{StaticResource CaptionButton}" Command="{x:Static SystemCommands.MinimizeWindowCommand}" Content="&#xe921;" />
+                <Button WindowChrome.IsHitTestVisibleInChrome="True" Visibility="{Binding IsFullscreen, ElementName=RootWindow, Converter={StaticResource RevBooleanToVisibilityConverter}, ConverterParameter=True}" Style="{StaticResource CaptionButton}" Command="{x:Static SystemCommands.MaximizeWindowCommand}" Content="{Binding WindowState, ElementName=RootWindow, Converter={StaticResource MaximizedTextConverter}}" />
                 <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionCloseButton}" Command="{x:Static SystemCommands.CloseWindowCommand}" Content="&#xe8bb;" />
             </StackPanel>
         </Border>

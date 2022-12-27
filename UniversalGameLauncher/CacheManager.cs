@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,26 @@ namespace UniversalGameLauncher
     {
         public string CachePath { get; init; }
         public string CacheInfoPath { get; init; }
+
+        //private static CacheManager? _instance = null;
+        //private static object syncRoot = new();
+
+        //public static CacheManager Instance
+        //{
+        //    get
+        //    {
+        //        if (_instance == null)
+        //        {
+        //            lock (syncRoot)
+        //            {
+        //                if (_instance == null)
+        //                    _instance = new();
+        //            }
+        //        }
+
+        //        return _instance;
+        //    }
+        //}
 
         struct CacheInfo
         {
@@ -91,9 +112,24 @@ namespace UniversalGameLauncher
         {
             var key = GetCacheKey(urlOrPath);
             if (IsCachedAndNotExpired(key))
-                return GetCachedVersion(key);
-            else
-                return RetrieveNewAndCache(urlOrPath, key);
+            {
+                var data = GetCachedVersion(key);
+                if (data != null)
+                    return data;
+            }
+            return RetrieveNewAndCache(urlOrPath, key);
+        }
+
+        public async Task<byte[]?> GetAsync(string urlOrPath)
+        {
+            var key = GetCacheKey(urlOrPath);
+            if (IsCachedAndNotExpired(key))
+            {
+                var data = GetCachedVersion(key);
+                if (data != null)
+                    return data;
+            }
+            return await RetrieveNewAndCacheAsync(urlOrPath, key);
         }
 
         public string? GetCacheFileName(string urlOrPath)
@@ -101,6 +137,16 @@ namespace UniversalGameLauncher
             var key = GetCacheKey(urlOrPath);
             if (!IsCachedAndNotExpired(key))
                 if (RetrieveNewAndCache(urlOrPath, key) == null)
+                    return null;
+            if (!cacheDb.ContainsKey(key))
+                return null;
+            return cacheDb[key].CacheFilename;
+        }
+        public async Task<string?> GetCacheFileNameAsync(string urlOrPath)
+        {
+            var key = GetCacheKey(urlOrPath);
+            if (!IsCachedAndNotExpired(key))
+                if (await RetrieveNewAndCacheAsync(urlOrPath, key) == null)
                     return null;
             if (!cacheDb.ContainsKey(key))
                 return null;
@@ -122,10 +168,17 @@ namespace UniversalGameLauncher
             return (info.LastChanged + info.MaxCacheDuration) > DateTime.Now;
         }
 
-        private byte[] GetCachedVersion(string key)
+        private byte[]? GetCachedVersion(string key)
         {
             var info = cacheDb[key];
-            return File.ReadAllBytes(info.CacheFilename);
+            try
+            {
+                return File.ReadAllBytes(info.CacheFilename);
+            }
+            catch (FileNotFoundException)
+            {
+                return null;
+            }
         }
 
         private byte[]? RetrieveNewAndCache(string urlOrPath, string cacheKey)
@@ -138,6 +191,28 @@ namespace UniversalGameLauncher
             var cacheFile = GetCacheFile(cacheKey);
 
             File.WriteAllBytes(cacheFile, data);
+
+            cacheDb[cacheKey] = new CacheInfo()
+            {
+                LastChanged = DateTime.Now,
+                MaxCacheDuration = TimeSpan.FromHours(2),
+                CacheFilename = cacheFile,
+                OriginalUrl = urlOrPath
+            };
+
+            return data;
+        }
+
+        private async Task<byte[]?> RetrieveNewAndCacheAsync(string urlOrPath, string cacheKey)
+        {
+            var data = await GetOriginalAsync(urlOrPath);
+
+            if (data == null)
+                return null;
+
+            var cacheFile = GetCacheFile(cacheKey);
+
+            await File.WriteAllBytesAsync(cacheFile, data);
 
             cacheDb[cacheKey] = new CacheInfo()
             {
@@ -180,6 +255,16 @@ namespace UniversalGameLauncher
             return data;
         }
 
+        private async Task<byte[]?> GetOriginalAsync(string originalUrlOrPath)
+        {
+            byte[]? data;
+            if (new Uri(originalUrlOrPath).IsFile)
+                data = File.ReadAllBytes(originalUrlOrPath);
+            else
+                data = await DownloadBytes(originalUrlOrPath);
+            return data;
+        }
+
         private static ulong KnuthHash(string read)
         {
             var hashedValue = 3074457345618258791ul;
@@ -190,5 +275,11 @@ namespace UniversalGameLauncher
             }
             return hashedValue;
         }
+
+        //[EditorBrowsable(EditorBrowsableState.Never)]
+        //internal static void __setInstance(CacheManager instance)
+        //{
+        //    _instance = instance;
+        //}
     }
 }

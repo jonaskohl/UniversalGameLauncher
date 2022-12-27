@@ -32,6 +32,11 @@
                                             <GradientStop Color="Transparent" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Border.Background>
+                                    <Border x:Name="ShineBorder" BorderThickness="0,1,0,0">
+                                        <Border.BorderBrush>
+                                            <SolidColorBrush Color="White" Opacity="0" />
+                                        </Border.BorderBrush>
+                                    </Border>
                                 </Border>
                             </Grid>
                             <ControlTemplate.Triggers>
@@ -60,6 +65,10 @@
                                                     Storyboard.TargetName="EffectBorder"
                                                     Storyboard.TargetProperty="(Border.Background).(LinearGradientBrush.Opacity)"
                                                     From="0.0" To="0.33" Duration="0:0:0.1" AutoReverse="False" RepeatBehavior="1x" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="ShineBorder"
+                                                    Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Opacity)"
+                                                    From="0.0" To="0.33" Duration="0:0:0.1" AutoReverse="False" RepeatBehavior="1x" />
                                             </Storyboard>
                                         </BeginStoryboard>
                                     </EventTrigger.Actions>
@@ -81,6 +90,10 @@
                                                 <DoubleAnimation
                                                     Storyboard.TargetName="EffectBorder"
                                                     Storyboard.TargetProperty="(Border.Background).(LinearGradientBrush.Opacity)"
+                                                    From="0.33" To="0.0" Duration="0:0:0.1" AutoReverse="False" RepeatBehavior="1x" />
+                                                <DoubleAnimation
+                                                    Storyboard.TargetName="ShineBorder"
+                                                    Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Opacity)"
                                                     From="0.33" To="0.0" Duration="0:0:0.1" AutoReverse="False" RepeatBehavior="1x" />
                                             </Storyboard>
                                         </BeginStoryboard>

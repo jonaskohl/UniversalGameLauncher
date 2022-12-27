@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -34,13 +35,18 @@ namespace UniversalGameLauncher
         public static readonly DependencyProperty GamesProperty = DependencyProperty.Register("Games", typeof(GameInfo[]), typeof(MainWindow));
         public static readonly DependencyProperty GamesAreLoadingProperty = DependencyProperty.Register("GamesAreLoading", typeof(bool), typeof(MainWindow));
         public static readonly DependencyProperty IsOnHomePageProperty = DependencyProperty.Register("IsOnHomePage", typeof(bool), typeof(MainWindow));
+        public static readonly DependencyProperty IsFullscreenProperty = DependencyProperty.Register("IsFullscreen", typeof(bool), typeof(MainWindow));
 
+        const int CAPTIONHEIGHT = 30;
+        float windowScale = 1.0f;
 
         DispatcherTimer _timer = new DispatcherTimer();
         private string _leftAxis;
         private string _rightAxis;
         private string _buttons;
         private Controller _controller;
+
+        private CacheManager cacheManager;
 
         [Flags]
         enum GamepadNavigationChangeKind
@@ -83,6 +89,16 @@ namespace UniversalGameLauncher
             set => SetValue(IsOnHomePageProperty, value);
         }
 
+        public bool IsFullscreen
+        {
+            get => (bool)GetValue(IsFullscreenProperty);
+            set
+            {
+                if (ChangeFullscreen(value))
+                    SetValue(IsFullscreenProperty, value);
+            }
+        }
+
         private const int WM_SYSCOMMAND = 0x112;
         uint TPM_LEFTALIGN = 0x0000;
         uint TPM_RETURNCMD = 0x0100;
@@ -116,8 +132,6 @@ namespace UniversalGameLauncher
 
         [DllImport("dwmapi.dll")]
         static extern IntPtr DwmSetWindowAttribute(IntPtr hWnd, uint dwAttribute, ref uint pvAttribute, uint cbAttribute);
-
-        CacheManager cacheManager;
 
         public MainWindow()
         {
@@ -163,9 +177,11 @@ namespace UniversalGameLauncher
                         Games = new GameInfo[][]
                         {
                             new SteamGameCollector().GetGames(),
-                            new MiscHardCodedGameCollector().GetGames(),
+                            //new MiscHardCodedGameCollector().GetGames(),
+                            new XBOXGamesCollector().GetGames(),
                             new GogGamesCollector().GetGames(),
-                            new OriginGamesCollector().GetGames()
+                            new OriginGamesCollector().GetGames(),
+                            new EpicGamesCollector().GetGames(),
                         }.SelectMany(i => i).Where(i => i is not null).OrderBy(i => i.Name?.ToLower()).ToArray();
                     });
                 }
@@ -184,6 +200,30 @@ namespace UniversalGameLauncher
                     });
                 });
             });
+        }
+
+        private bool ChangeFullscreen(bool value)
+        {
+            if (value)
+            {
+                Visibility = Visibility.Collapsed;
+                WindowStyle = WindowStyle.None;
+                RootChrome.CaptionHeight = 0;
+                ResizeMode = ResizeMode.NoResize;
+                Topmost = true;
+                WindowState = WindowState.Maximized;
+                BorderThickness = new Thickness(0);
+                Visibility = Visibility.Visible;
+            } else
+            {
+                WindowState = WindowState.Normal;
+                ResizeMode = ResizeMode.CanResize;
+                WindowStyle = WindowStyle.SingleBorderWindow;
+                RootChrome.CaptionHeight = CAPTIONHEIGHT * windowScale;
+                Topmost = false;
+            }
+
+            return true;
         }
 
         private void MainWindow_Closing(object? sender, CancelEventArgs e)
@@ -267,11 +307,34 @@ namespace UniversalGameLauncher
             if (changed.HasFlag(GamepadNavigationChangeKind.ActivateButton) && newState.ActivateButton)
             {
                 var focusedControl = FocusManager.GetFocusedElement(this);
-                if (focusedControl is Button)
+
+                if (focusedControl is ItemsControl)
                 {
-                    var peer = new ButtonAutomationPeer(focusedControl as Button);
-                    var invokeProv = peer.GetPattern(PatternInterface.Invoke) as IInvokeProvider;
-                    invokeProv?.Invoke();
+                    var ic = focusedControl as ItemsControl;
+                    for (var i = 0; i < ic.Items.Count; ++i)
+                    {
+                        var elem = (UIElement)ic.ItemContainerGenerator.ContainerFromIndex(i);
+                        if (elem is Button && (elem as Button).IsFocused)
+                        {
+                            focusedControl = elem;
+                            break;
+                        }
+                        else
+                        {
+                            MessageBox.Show(elem.GetType().FullName);
+                        }
+                    }
+
+                    if (focusedControl is Button)
+                    {
+                        var peer = new ButtonAutomationPeer(focusedControl as Button);
+                        var invokeProv = peer.GetPattern(PatternInterface.Invoke) as IInvokeProvider;
+                        invokeProv?.Invoke();
+                    }
+                    else
+                    {
+                        MessageBox.Show("FOCUSED CONTROL IS NOT A BUTTON, IT IS " + (focusedControl == null ? "NULL" : focusedControl.GetType().FullName));
+                    }
                 }
             }
         }
@@ -290,6 +353,26 @@ namespace UniversalGameLauncher
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
+
+            var args = Environment.GetCommandLineArgs();
+
+            if (args.Contains("/fullscreen"))
+                IsFullscreen = true;
+
+            {
+                const string prefix = "/overridescale=";
+                var _c = args.Where(a => a.StartsWith(prefix));
+                if (_c.Count() > 0)
+                {
+                    var param = _c.First().Substring(prefix.Length);
+                    if (float.TryParse(param, NumberStyles.Float, CultureInfo.InvariantCulture, out float value))
+                    {
+                        RootScale.ScaleX = RootScale.ScaleY = value;
+                        windowScale = value;
+                        RootChrome.CaptionHeight = CAPTIONHEIGHT * windowScale;
+                    }
+                }
+            }
         }
 
         private async Task PopulateCoverArt(GameInfo[] games)
@@ -298,7 +381,7 @@ namespace UniversalGameLauncher
             {
                 Parallel.ForEach(games, new ParallelOptions()
                 {
-                    MaxDegreeOfParallelism = 2
+                    MaxDegreeOfParallelism = 4
                 }, game =>
                 {
                     game.FetchImageSourceAction?.Invoke(game, Dispatcher, cacheManager);
@@ -330,7 +413,7 @@ namespace UniversalGameLauncher
             var wMenu = GetSystemMenu(callingWindow, false);
             EnableMenuItem(wMenu, SC_MAXIMIZE, (WindowState == WindowState.Maximized) ? MF_GRAYED : MF_ENABLED);
 
-            var pt = new Point(96, 24);
+            var pt = new Point((int)(96 * windowScale), (int)(24 * windowScale));
             pt.Offset(BorderThickness.Left, BorderThickness.Top);
             pt = PointToScreen(pt);
 
@@ -353,7 +436,7 @@ namespace UniversalGameLauncher
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if (WindowState == WindowState.Maximized)
+            if (WindowState == WindowState.Maximized && !IsFullscreen)
             {
                 BorderThickness = new Thickness(8);
             }
@@ -391,10 +474,18 @@ namespace UniversalGameLauncher
             var btn = sender as Button;
             var dataObject = btn.DataContext as GameInfo;
 
+            if (MessageBox.Show($"Launch {dataObject.Name}?", "", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                return;
+
+            //MessageBox.Show(dataObject.ExecutableLocation);
+            //MessageBox.Show(string.Join(" ", dataObject.ExecutableArguments.Select(a => EscapeArg(a))));
+
+            //return;
+
             var psi = new ProcessStartInfo()
             {
                 FileName = dataObject.ExecutableLocation,
-                Arguments = string.Join(" ", dataObject.ExecutableArguments.Select(a => EscapeArg(a)))
+                Arguments = string.Join(" ", (dataObject.ExecutableArguments ?? new string[0]).Select(a => EscapeArg(a)))
             };
             Process.Start(psi);
         }
@@ -445,6 +536,11 @@ namespace UniversalGameLauncher
         private void AddButton_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void ToggleFullscreen_Click(object sender, RoutedEventArgs e)
+        {
+            IsFullscreen = !IsFullscreen;
         }
     }
 }
