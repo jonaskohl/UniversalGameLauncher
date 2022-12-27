@@ -9,18 +9,19 @@
 		<UseWPF>true</UseWPF>
 		<Configurations>Debug;Release;ReleaseOldWindows</Configurations>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<ApplicationIcon>icon.ico</ApplicationIcon>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <DefineConstants>$(DefineConstants)TRACE;UWP</DefineConstants>
+		<DefineConstants>$(DefineConstants)TRACE;UWP</DefineConstants>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <DefineConstants>$(DefineConstants)TRACE;UWP</DefineConstants>
+		<DefineConstants>$(DefineConstants)TRACE;UWP</DefineConstants>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseOldWindows|AnyCPU'">
-	  <DefineConstants>$(DefineConstants)TRACE</DefineConstants>
+		<DefineConstants>$(DefineConstants)TRACE</DefineConstants>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -31,6 +32,11 @@
 		<None Remove="Resources\gog_16.png" />
 		<None Remove="Resources\steam_16.png" />
 		<None Remove="Resources\xbox_16.png" />
+		<None Remove="SplashScreen1.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="icon.ico" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -42,12 +48,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Reference Include="Microsoft.WindowsAPICodePack">
-	    <HintPath>..\..\..\git\WindowsAPICodePack\Shell\bin\Release\Microsoft.WindowsAPICodePack.dll</HintPath>
-	  </Reference>
-	  <Reference Include="Microsoft.WindowsAPICodePack.Shell">
-	    <HintPath>..\..\..\git\WindowsAPICodePack\Shell\bin\Release\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
-	  </Reference>
+		<Reference Include="Microsoft.WindowsAPICodePack">
+			<HintPath>..\..\..\git\WindowsAPICodePack\Shell\bin\Release\Microsoft.WindowsAPICodePack.dll</HintPath>
+		</Reference>
+		<Reference Include="Microsoft.WindowsAPICodePack.Shell">
+			<HintPath>..\..\..\git\WindowsAPICodePack\Shell\bin\Release\Microsoft.WindowsAPICodePack.Shell.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -55,15 +61,21 @@
 		<Resource Include="Resources\cover_missing.png" />
 		<Resource Include="Resources\cover_shadow.png" />
 		<Resource Include="Resources\egs_16.png">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Resource>
 		<Resource Include="Resources\gog_16.png">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Resource>
-		<Resource Include="Resources\steam_16.png" />
+		<Resource Include="Resources\steam_16.png">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</Resource>
 		<Resource Include="Resources\xbox_16.png">
-		  <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</Resource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <SplashScreen Include="SplashScreen1.png" />
 	</ItemGroup>
 
 </Project>

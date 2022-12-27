@@ -45,7 +45,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <local:GameDisplay OverlayIcon="{Binding GameSource}" GameCover="{Binding CoverImage, FallbackValue={x:Null}}"  GameName="{Binding Name}" Click="GameClicked" />
+                            <local:GameDisplay Margin="8" OverlayIcon="{Binding GameSource}" GameCover="{Binding CoverImage, FallbackValue={x:Null}}"  GameName="{Binding Name}" Click="GameClicked" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>

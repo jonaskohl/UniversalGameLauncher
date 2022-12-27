@@ -2,12 +2,14 @@
 using SixLabors.ImageSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace UniversalGameLauncher
 {
@@ -41,31 +43,42 @@ namespace UniversalGameLauncher
                     {
                         string? coverImagePath = null;
 
-                        var possibleCachedImagePath = @"C:\ProgramData\GOG.com\Galaxy\webcache\52727450581289995\gog\" + gameID + @"\";
-                        if (Directory.Exists(possibleCachedImagePath))
+                        var possibleCachedImagePaths = Directory.GetDirectories(@"C:\ProgramData\GOG.com\Galaxy\webcache")
+                            .Where(d => Path.GetFileName(d).All(c => c >= '0' && c <= '9'))
+                            .Select(d => Path.Combine(d, "gog", gameID))
+                            .Where(d => Directory.Exists(d))
+                            .ToArray();
+
+                        foreach (var possibleCachedImagePath in possibleCachedImagePaths)
                         {
-                            var possibleImageFile = Directory.GetFiles(possibleCachedImagePath).Where(f => f.EndsWith("_glx_vertical_cover.webp")).FirstOrDefault();
-                            if (possibleImageFile != null && File.Exists(possibleImageFile))
+                            if (Directory.Exists(possibleCachedImagePath))
                             {
-                                try
+                                var possibleImageFile = Directory.GetFiles(possibleCachedImagePath).Where(f => f.EndsWith("_glx_vertical_cover.webp")).FirstOrDefault();
+                                if (possibleImageFile != null && File.Exists(possibleImageFile))
                                 {
-                                    var img = Image.Load(possibleImageFile);
-                                    var temp = TempFileManager.GetTempFilename("tmp.jpg");
-                                    img.Save(temp);
-                                    coverImagePath = temp;
-                                }
-                                catch
-                                {
-                                    return;
+                                    try
+                                    {
+                                        var img = Image.Load(possibleImageFile);
+                                        var temp = TempFileManager.GetTempFilename("tmp.jpg");
+                                        img.Save(temp);
+                                        coverImagePath = temp;
+                                        break;
+                                    }
+                                    catch
+                                    {
+                                        return;
+                                    }
                                 }
                             }
                         }
 
                         if (coverImagePath != null)
+                        {
                             dispatcher.Invoke(() =>
                             {
                                 game.CoverImage = new BitmapImage(new Uri(coverImagePath));
                             });
+                        }
                     },
                     ExecutableArguments = new string[0],
                     ExecutableLocation = exe,

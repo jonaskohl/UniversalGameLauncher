@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 
 namespace UniversalGameLauncher
 {
@@ -34,7 +35,10 @@ namespace UniversalGameLauncher
 
             var libFoldersList = (IEnumerable<dynamic>)volvo.Value;
             //var libFolders = libFoldersList.Where(v => v.Value.totalsize.Value != "0" && Enumerable.ToArray<dynamic>(v.Value.apps).Length > 0).Select(v => v.Value.path.ToString()).ToArray();
-            var libFolders = libFoldersList.Where(v => DoesPropertyExist(v.Value, "apps") && Enumerable.ToArray<dynamic>(v.Value.apps).Length > 0).Select(v => v.Value.path.ToString()).ToArray();
+            var libFolders = libFoldersList
+                .Where(v => DoesPropertyExist(v.Value, "apps") && Enumerable.ToArray<dynamic>(v.Value.apps).Length > 0)
+                .Select(v => v.Value.path.ToString())
+                .ToArray();
 
             var infos = libFolders.Select(f =>
             {
@@ -62,7 +66,7 @@ namespace UniversalGameLauncher
                     .Select(v => new GameInfo()
                     {
                         GameSource = GameSourceUtils.GetOverlayIcon(GameSource.Steam),
-                        FetchImageSourceAction = (game, dispatcher, cacheManager) =>
+                        FetchImageSourceAction = (game, innerDispatcher, cacheManager) =>
                         {
                             var appId = v.appid.Value.ToString();
                             var coverUrl = $"https://steamcdn-a.akamaihd.net/steam/apps/{appId}/library_600x900.jpg";
@@ -76,12 +80,13 @@ namespace UniversalGameLauncher
                                     return;
                             }
                             //cacheManager.Save();
-                            dispatcher.Invoke(() =>
+                            innerDispatcher.Invoke(() =>
                             {
                                 try
                                 {
                                     game.CoverImage = new BitmapImage(new Uri(coverFile));
-                                } catch (FileNotFoundException) { }
+                                }
+                                catch (FileNotFoundException) { }
                             });
                         },
                         Name = v.name.Value,
@@ -92,8 +97,8 @@ namespace UniversalGameLauncher
                         }
                     }));
 
-                return appInfos.ToArray();
-            }).SelectMany(i => i).ToArray();
+                return appInfos.Where(i => i is not null).Select(i => i!).ToArray();
+            }).SelectMany(i => i!).ToArray();
             return infos;
         }
 

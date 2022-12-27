@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Windows.Threading;
 
 namespace UniversalGameLauncher
 {
@@ -39,9 +40,9 @@ namespace UniversalGameLauncher
                     GameSource = GameSourceUtils.GetOverlayIcon(GameSource.XBOX),
                     ExecutableLocation = "explorer",
                     ExecutableArguments = new[]
-                    {
-                        @"shell:appsFolder\" + app.ParsingName
-                    },
+                        {
+                            @"shell:appsFolder\" + app.ParsingName
+                        },
                 });
             }
 

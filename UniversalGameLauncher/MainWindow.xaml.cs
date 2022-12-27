@@ -157,6 +157,8 @@ namespace UniversalGameLauncher
                 CaptionButtonsWrapper.CornerRadius = new CornerRadius(0);
             }
 
+            var args = Environment.GetCommandLineArgs();
+
             cacheManager = new()
             {
                 CacheInfoPath = cacheFilePath,
@@ -164,42 +166,59 @@ namespace UniversalGameLauncher
             };
             cacheManager.TryLoad();
 
-            //Games = Enumerable.Range(0, 256).Select(i => new GameInfo() { Name = $"Game {i + 1}" }).ToArray();
+            int dummyGameCount = -1;
 
-            GamesAreLoading = true;
-
-            Task.Run(() =>
             {
-                try
+                const string prefix = "/debug:dummyGames=";
+                var _c = args.Where(a => a.StartsWith(prefix));
+                if (_c.Count() > 0)
                 {
-                    Dispatcher.BeginInvoke(() =>
+                    var param = _c.First().Substring(prefix.Length);
+                    if (int.TryParse(param, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value))
                     {
-                        Games = new GameInfo[][]
+                        dummyGameCount = value;
+                    }
+                }
+            }
+
+            if (dummyGameCount >= 0)
+                Games = Enumerable.Range(0, dummyGameCount).Select(i => new GameInfo() { Name = $"Game {i + 1}" }).ToArray();
+            else
+            {
+                GamesAreLoading = true;
+
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        Dispatcher.Invoke(() =>
                         {
+                            Games = new GameInfo[][]
+                            {
                             new SteamGameCollector().GetGames(),
-                            //new MiscHardCodedGameCollector().GetGames(),
                             new XBOXGamesCollector().GetGames(),
                             new GogGamesCollector().GetGames(),
                             new OriginGamesCollector().GetGames(),
                             new EpicGamesCollector().GetGames(),
-                        }.SelectMany(i => i).Where(i => i is not null).OrderBy(i => i.Name?.ToLower()).ToArray();
-                    });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }).ContinueWith(t1 =>
-            {
-                Dispatcher.BeginInvoke(() =>
-                {
-                    GamesAreLoading = false;
-                    PopulateCoverArt(Games).ContinueWith(t2 =>
+                            }.SelectMany(i => i).Where(i => i is not null).OrderBy(i => i.Name?.ToLower()).ToArray();
+                        });
+                    }
+                    catch (Exception ex)
                     {
-                        cacheManager.Save();
+                        MessageBox.Show(ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }).ContinueWith(t1 =>
+                {
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        GamesAreLoading = false;
+                        PopulateCoverArt(Games).ContinueWith(t2 =>
+                        {
+                            cacheManager.Save();
+                        });
                     });
                 });
-            });
+            }
         }
 
         private bool ChangeFullscreen(bool value)
@@ -214,7 +233,8 @@ namespace UniversalGameLauncher
                 WindowState = WindowState.Maximized;
                 BorderThickness = new Thickness(0);
                 Visibility = Visibility.Visible;
-            } else
+            }
+            else
             {
                 WindowState = WindowState.Normal;
                 ResizeMode = ResizeMode.CanResize;
@@ -373,6 +393,19 @@ namespace UniversalGameLauncher
                     }
                 }
             }
+
+            {
+                const string prefix = "/experimentalFeature:showFullscreenButton=";
+                var _c = args.Where(a => a.StartsWith(prefix));
+                if (_c.Count() > 0)
+                {
+                    var param = _c.First().Substring(prefix.Length).ToLower();
+                    if (param == "1" || param == "yes" || param == "true" || param == "on")
+                    {
+                        titleButton_ToggleFullScreen.Visibility = Visibility.Visible;
+                    }
+                }
+            }
         }
 
         private async Task PopulateCoverArt(GameInfo[] games)
@@ -474,18 +507,27 @@ namespace UniversalGameLauncher
             var btn = sender as Button;
             var dataObject = btn.DataContext as GameInfo;
 
-            if (MessageBox.Show($"Launch {dataObject.Name}?", "", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+            if (dataObject is null)
+            {
+                MessageBox.Show("Could not retrieve GameInfo from item", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
+            }
 
-            //MessageBox.Show(dataObject.ExecutableLocation);
-            //MessageBox.Show(string.Join(" ", dataObject.ExecutableArguments.Select(a => EscapeArg(a))));
+            var message = $"Launch {dataObject?.Name ?? "<NO_NAME>"}?";
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+            {
+                message += Environment.NewLine + Environment.NewLine + "Command:"
+                        + Environment.NewLine + (dataObject?.ExecutableLocation ?? "<NO_NAME>")
+                        + Environment.NewLine + string.Join(" ", (dataObject?.ExecutableArguments ?? new string[0]).Select(a => EscapeArg(a)));
+            }
 
-            //return;
+            if (MessageBox.Show(message, "", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                return;
 
             var psi = new ProcessStartInfo()
             {
-                FileName = dataObject.ExecutableLocation,
-                Arguments = string.Join(" ", (dataObject.ExecutableArguments ?? new string[0]).Select(a => EscapeArg(a)))
+                FileName = dataObject?.ExecutableLocation,
+                Arguments = string.Join(" ", (dataObject?.ExecutableArguments ?? new string[0]).Select(a => EscapeArg(a)))
             };
             Process.Start(psi);
         }
@@ -504,7 +546,7 @@ namespace UniversalGameLauncher
         {
             if (MainViewContainer.Content is not null && MainViewContainer.Content is DisplayPage)
             {
-                (MainViewContainer.Content as DisplayPage).EventOccurred -= DisplayPage_EventOccurred;
+                (MainViewContainer.Content as DisplayPage)!.EventOccurred -= DisplayPage_EventOccurred;
             }
 
             IsOnHomePage = typeof(T) == typeof(GamesPage);

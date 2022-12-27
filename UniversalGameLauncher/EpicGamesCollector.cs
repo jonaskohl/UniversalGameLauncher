@@ -14,6 +14,7 @@ using Flurl.Http;
 using System.Web;
 using System.Windows;
 using System.Globalization;
+using System.Windows.Threading;
 
 namespace UniversalGameLauncher
 {
@@ -31,7 +32,8 @@ namespace UniversalGameLauncher
             try
             {
                 iniFile = IniFile.Load(iniPath);
-            } catch (FormatException)
+            }
+            catch (FormatException)
             {
                 return new GameInfo[0];
             }
@@ -68,7 +70,8 @@ namespace UniversalGameLauncher
                 try
                 {
                     metaFile = JObject.Parse(File.ReadAllText(metaFilePath));
-                } catch (JsonReaderException)
+                }
+                catch (JsonReaderException)
                 {
                     return null;
                 }
@@ -118,7 +121,7 @@ namespace UniversalGameLauncher
                         var pages = data["pages"];
                         var imageListPage = pages.Where(p => p["_images_"] != null && p["_images_"].Where(i => i.Value<string>().Contains("1200x1600")).Count() > 0).First();
                         var imageUrl = imageListPage["_images_"].Where(i => i.Value<string>().Contains("1200x1600")).First().Value<string>();
-                        
+
                         var coverFile = await cacheManager.GetCacheFileNameAsync(imageUrl);
                         if (coverFile == null)
                         {
@@ -129,7 +132,8 @@ namespace UniversalGameLauncher
                             try
                             {
                                 game.CoverImage = new BitmapImage(new Uri(coverFile));
-                            } catch (FileNotFoundException) { }
+                            }
+                            catch (FileNotFoundException) { }
                             game.Name = name;
                         });
 

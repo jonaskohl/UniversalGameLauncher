@@ -86,7 +86,7 @@
                         <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="HomeButton_Click" ToolTip="Back to game list" Visibility="{Binding IsOnHomePage, ElementName=RootWindow, Converter={StaticResource RevBooleanToVisibilityConverter}, ConverterParameter=True}" Content="&#xe80f;" FontSize="16" />
                         <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="Settings_Click" ToolTip="Settings" Visibility="{Binding IsOnHomePage, ElementName=RootWindow, Converter={StaticResource BooleanToVisibilityConverter}}" FontSize="16" Content="&#xe713;" />
                         <Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="AddButton_Click" Content="&#xe710;" FontSize="16" ToolTip="Add game" />
-                        <!--<Button WindowChrome.IsHitTestVisibleInChrome="True" Style="{StaticResource CaptionButton}" Click="ToggleFullscreen_Click" Content="&#xe740;" FontSize="16" />-->
+                        <Button x:Name="titleButton_ToggleFullScreen" WindowChrome.IsHitTestVisibleInChrome="True" Visibility="Collapsed" Style="{StaticResource CaptionButton}" Click="ToggleFullscreen_Click" Content="&#xe740;" FontSize="16" />
                     </StackPanel>
                 </Border>
                 <Border Padding="8">
