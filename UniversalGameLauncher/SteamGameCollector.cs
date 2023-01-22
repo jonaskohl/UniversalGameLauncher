@@ -63,6 +63,7 @@ namespace UniversalGameLauncher
                     .Select(f => File.ReadAllText(f))
                     .Select(c => (VdfConvert.Deserialize(c) as dynamic).Value)
                     .Where(v => !IgnoreSteamIds.Contains(v.appid.Value.ToString()))
+                    .Where(v => !(DoesPropertyExist(v, "UserConfig") && DoesPropertyExist(v.UserConfig, "highqualityaudio")))
                     .Select(v => new GameInfo()
                     {
                         GameSource = GameSourceUtils.GetOverlayIcon(GameSource.Steam),
