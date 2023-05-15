@@ -14,37 +14,42 @@ namespace UniversalGameLauncher
     {
         public GameInfo[] GetGames()
         {
-            var FOLDERID_AppsFolder = new Guid("{1e87508d-89c2-42f0-8a7e-645a0f50ca58}");
-            var appsFolder = (ShellObject)KnownFolderHelper.FromKnownFolderId(FOLDERID_AppsFolder);
-
             var games = new List<GameInfo>();
-            var key = new PropertyKey("9f4c2855-9f79-4b39-a8d0-e1d42de1d5f3", 15); // System.AppUserModel.PackageInstallPath
 
-            foreach (var app in (IKnownFolder)appsFolder)
+            try
             {
-                var prop = app.Properties.GetProperty(key);
-                if (prop == null || prop.ValueAsObject == null) continue;
+                var FOLDERID_AppsFolder = new Guid("{1e87508d-89c2-42f0-8a7e-645a0f50ca58}");
+                var appsFolder = (ShellObject)KnownFolderHelper.FromKnownFolderId(FOLDERID_AppsFolder);
 
-                var appDir = prop.ValueAsObject.ToString();
+                var key = new PropertyKey("9f4c2855-9f79-4b39-a8d0-e1d42de1d5f3", 15); // System.AppUserModel.PackageInstallPath
 
-                if (appDir == null) continue;
-
-                var xboxPath = Path.Combine(appDir, "xboxservices.config");
-
-                if (!File.Exists(xboxPath)) continue;
-
-                games.Add(new GameInfo()
+                foreach (var app in (IKnownFolder)appsFolder)
                 {
-                    Name = app.Name,
-                    CoverImage = app.Thumbnail.ExtraLargeBitmapSource,
-                    GameSource = GameSourceUtils.GetOverlayIcon(GameSource.XBOX),
-                    ExecutableLocation = "explorer",
-                    ExecutableArguments = new[]
-                        {
+                    var prop = app.Properties.GetProperty(key);
+                    if (prop == null || prop.ValueAsObject == null) continue;
+
+                    var appDir = prop.ValueAsObject.ToString();
+
+                    if (appDir == null) continue;
+
+                    var xboxPath = Path.Combine(appDir, "xboxservices.config");
+
+                    if (!File.Exists(xboxPath)) continue;
+
+                    games.Add(new GameInfo()
+                    {
+                        Name = app.Name,
+                        CoverImage = app.Thumbnail.ExtraLargeBitmapSource,
+                        GameSource = GameSourceUtils.GetOverlayIcon(GameSource.XBOX),
+                        ExecutableLocation = "explorer",
+                        ExecutableArguments = new[]
+                            {
                             @"shell:appsFolder\" + app.ParsingName
                         },
-                });
+                    });
+                }
             }
+            catch (ShellException) { }
 
             return games.ToArray();
         }

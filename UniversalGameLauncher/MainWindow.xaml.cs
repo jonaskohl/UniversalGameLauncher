@@ -200,6 +200,7 @@ namespace UniversalGameLauncher
                             new GogGamesCollector().GetGames(),
                             new OriginGamesCollector().GetGames(),
                             new EpicGamesCollector().GetGames(),
+                            new GamesExplorerGamesCollector().GetGames(),
                             }.SelectMany(i => i).Where(i => i is not null).OrderBy(i => i.Name?.ToLower()).ToArray();
                         });
                     }
